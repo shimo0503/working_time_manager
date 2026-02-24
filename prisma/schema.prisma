@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -11,4 +8,27 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+model WorkSession {
+  id           String   @id @default(uuid())
+  date         DateTime @db.Date
+  startTime    String
+  endTime      String
+  breakMinutes Int      @default(0)
+  note         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("work_sessions")
+}
+
+model Settings {
+  id                   String   @id @default("default")
+  hourlyRate           Int      @default(1000)
+  evaluationCycleHours Int      @default(160)
+  cycleStartDate       DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("settings")
 }
