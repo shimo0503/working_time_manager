@@ -4,6 +4,10 @@ import {
   getRecentWorkSessions,
 } from "@/app/actions/work-sessions";
 import { getSettings, checkAndAutoResetCycle } from "@/app/actions/settings";
+import {
+  getMonthlyAggregateByMonth,
+  getMonthlyAggregatesFromDate,
+} from "@/app/actions/monthly-aggregates";
 import { calcWorkMinutes } from "@/lib/time";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -33,28 +37,40 @@ export default async function DashboardPage() {
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
 
-  const [settings, monthlySessions, recentSessions] = await Promise.all([
-    getSettings(),
-    getWorkSessionsByMonth(year, month),
-    getRecentWorkSessions(5),
-  ]);
+  const [settings, monthlySessions, recentSessions, monthlyAggregate] =
+    await Promise.all([
+      getSettings(),
+      getWorkSessionsByMonth(year, month),
+      getRecentWorkSessions(5),
+      getMonthlyAggregateByMonth(year, month),
+    ]);
 
-  // 今月の合計実働時間（分）
-  const monthlyMinutes = monthlySessions.reduce(
+  // 今月の合計実働時間（分）= 個別記録 + 月次集計
+  const monthlySessionMinutes = monthlySessions.reduce(
     (sum, s) => sum + calcWorkMinutes(s.startTime, s.endTime, s.breakMinutes),
     0
   );
+  const monthlyMinutes =
+    monthlySessionMinutes + (monthlyAggregate?.totalMinutes ?? 0);
   const monthlyHours = monthlyMinutes / 60;
 
   // 今月の給与
   const monthlySalary = Math.floor(monthlyHours * settings.hourlyRate);
 
-  // 評価サイクル進捗
-  const cycleSessions = await getWorkSessionsFromDate(settings.cycleStartDate);
-  const cycleMinutes = cycleSessions.reduce(
+  // 評価サイクル進捗（個別記録 + 月次集計を合算）
+  const [cycleSessions, cycleAggregates] = await Promise.all([
+    getWorkSessionsFromDate(settings.cycleStartDate),
+    getMonthlyAggregatesFromDate(settings.cycleStartDate),
+  ]);
+  const cycleSessionMinutes = cycleSessions.reduce(
     (sum, s) => sum + calcWorkMinutes(s.startTime, s.endTime, s.breakMinutes),
     0
   );
+  const cycleAggregateMinutes = cycleAggregates.reduce(
+    (sum: number, a: { totalMinutes: number }) => sum + a.totalMinutes,
+    0
+  );
+  const cycleMinutes = cycleSessionMinutes + cycleAggregateMinutes;
   const cycleHours = cycleMinutes / 60;
   const cycleTarget = settings.evaluationCycleHours;
   const cycleProgress = Math.min(100, (cycleHours / cycleTarget) * 100);

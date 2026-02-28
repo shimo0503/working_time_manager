@@ -54,16 +54,32 @@ export async function updateSettings(data: {
 /** 評価サイクルが目標時間に達していれば自動でリセット */
 export async function checkAndAutoResetCycle(): Promise<void> {
   const settings = await getSettings();
+  const fromDate = settings.cycleStartDate;
+  const fromYear = fromDate.getFullYear();
+  const fromMonth = fromDate.getMonth() + 1;
 
-  const sessions = await prisma.workSession.findMany({
-    where: { date: { gte: settings.cycleStartDate } },
-  });
+  const [sessions, aggregates] = await Promise.all([
+    prisma.workSession.findMany({ where: { date: { gte: fromDate } } }),
+    prisma.monthlyAggregate.findMany({
+      where: {
+        OR: [
+          { year: { gt: fromYear } },
+          { year: fromYear, month: { gte: fromMonth } },
+        ],
+      },
+    }),
+  ]);
 
-  const totalMinutes = sessions.reduce(
+  const sessionMinutes = sessions.reduce(
     (sum: number, s: { startTime: string; endTime: string; breakMinutes: number }) =>
       sum + calcWorkMinutes(s.startTime, s.endTime, s.breakMinutes),
     0
   );
+  const aggregateMinutes = aggregates.reduce(
+    (sum: number, a: { totalMinutes: number }) => sum + a.totalMinutes,
+    0
+  );
+  const totalMinutes = sessionMinutes + aggregateMinutes;
 
   if (totalMinutes / 60 >= settings.evaluationCycleHours) {
     await prisma.settings.update({
