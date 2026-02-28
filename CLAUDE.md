@@ -38,6 +38,8 @@ docker compose exec app sh -c "npx prisma migrate dev --name <変更名>"
 
 # Prisma Clientの再生成（schema.prisma変更後）
 docker compose exec app sh -c "npx prisma generate && chown -R 1000:1000 src/generated/"
+# ↑ 再生成後は必ずコンテナを再起動すること（古いクライアントがキャッシュされるため）
+docker compose restart app
 
 # パッケージ追加
 docker compose exec app sh -c "npm install <package>"
