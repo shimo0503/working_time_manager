@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { calcWorkMinutes } from "@/lib/time";
 
 /** 設定を取得（なければデフォルトで作成） */
 export async function getSettings() {
@@ -48,6 +49,30 @@ export async function updateSettings(data: {
 
   revalidatePath("/");
   revalidatePath("/settings");
+}
+
+/** 評価サイクルが目標時間に達していれば自動でリセット */
+export async function checkAndAutoResetCycle(): Promise<void> {
+  const settings = await getSettings();
+
+  const sessions = await prisma.workSession.findMany({
+    where: { date: { gte: settings.cycleStartDate } },
+  });
+
+  const totalMinutes = sessions.reduce(
+    (sum: number, s: { startTime: string; endTime: string; breakMinutes: number }) =>
+      sum + calcWorkMinutes(s.startTime, s.endTime, s.breakMinutes),
+    0
+  );
+
+  if (totalMinutes / 60 >= settings.evaluationCycleHours) {
+    await prisma.settings.update({
+      where: { id: "default" },
+      data: { cycleStartDate: new Date() },
+    });
+    revalidatePath("/");
+    revalidatePath("/settings");
+  }
 }
 
 /** 評価サイクルをリセット（今日から開始） */

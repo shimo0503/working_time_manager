@@ -3,7 +3,7 @@ import {
   getWorkSessionsFromDate,
   getRecentWorkSessions,
 } from "@/app/actions/work-sessions";
-import { getSettings } from "@/app/actions/settings";
+import { getSettings, checkAndAutoResetCycle } from "@/app/actions/settings";
 import { calcWorkMinutes } from "@/lib/time";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -25,6 +25,9 @@ function formatDate(date: Date): string {
 }
 
 export default async function DashboardPage() {
+  // 評価サイクルが完了していれば自動リセット（データ取得前に実行）
+  await checkAndAutoResetCycle();
+
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
