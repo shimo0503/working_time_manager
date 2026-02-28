@@ -23,6 +23,19 @@ model WorkSession {
   @@map("work_sessions")
 }
 
+model MonthlyAggregate {
+  id           String   @id @default(uuid())
+  year         Int
+  month        Int
+  totalMinutes Int
+  note         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([year, month])
+  @@map("monthly_aggregates")
+}
+
 model Settings {
   id                   String   @id @default("default")
   hourlyRate           Int      @default(1000)
