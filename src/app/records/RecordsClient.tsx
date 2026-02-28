@@ -166,6 +166,14 @@ export function RecordsClient({
       {/* モーダル */}
       <WorkSessionForm
         open={addOpen}
+        defaultDate={(() => {
+          const now = new Date();
+          const isCurrentMonth =
+            year === now.getFullYear() && month === now.getMonth() + 1;
+          return isCurrentMonth
+            ? now.toISOString().slice(0, 10)
+            : `${year}-${String(month).padStart(2, "0")}-01`;
+        })()}
         onClose={() => setAddOpen(false)}
       />
       {editSession && (

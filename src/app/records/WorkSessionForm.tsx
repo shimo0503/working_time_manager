@@ -21,14 +21,15 @@ import type { WorkSession } from "@/generated/prisma/client";
 
 type Props = {
   session?: WorkSession;
+  defaultDate?: string;
   open: boolean;
   onClose: () => void;
 };
 
-export function WorkSessionForm({ session, open, onClose }: Props) {
+export function WorkSessionForm({ session, defaultDate, open, onClose }: Props) {
   const [isPending, startTransition] = useTransition();
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = defaultDate ?? new Date().toISOString().slice(0, 10);
 
   const [form, setForm] = useState<WorkSessionInput>({
     date: session
