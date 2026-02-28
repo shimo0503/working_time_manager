@@ -129,6 +129,44 @@ Dockerfile
 ### Tailwind CSS v4
 - `tailwind.config.js` は不要。CSS変数ベースの設定（`globals.css` に定義済み）。
 
+## Git コミットルール（Claude Code）
+
+Claude Code がコミットを作成する際の規約。
+
+### コミットメッセージ形式
+
+```
+<type>: <変更の概要（日本語可）>
+
+<本文：なぜこの変更をしたか（任意）>
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+```
+
+### type の種類
+
+| type | 用途 |
+|------|------|
+| `feat` | 新機能の追加 |
+| `fix` | バグ修正 |
+| `style` | UIや書式の変更（ロジック変更なし） |
+| `refactor` | リファクタリング（機能変更なし） |
+| `docs` | ドキュメントのみの変更 |
+| `chore` | ビルド・設定ファイルの変更 |
+
+### コミット粒度の方針
+
+- 1コミット = 1つの論理的な変更単位
+- 複数の独立した変更は別コミットに分ける
+- ユーザーから明示的に指示された場合のみコミットを作成する
+
+### 禁止事項
+
+- `--no-verify`（フック回避）は使用しない
+- `git push --force` は使用しない
+- `git commit --amend` は明示的な指示がない限り使用しない
+- 空コミットは作成しない
+
 ## 将来の Supabase 移行
 
 `docker-compose.yml` の `DATABASE_URL` を Supabase の接続文字列に差し替えるだけで移行可能。Prisma スキーマはそのまま使える。
