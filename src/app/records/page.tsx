@@ -1,5 +1,6 @@
 import { getWorkSessionsByMonth } from "@/app/actions/work-sessions";
 import { getSettings } from "@/app/actions/settings";
+import { getMonthlyAggregateByMonth } from "@/app/actions/monthly-aggregates";
 import { RecordsPageWrapper } from "./RecordsPageWrapper";
 
 type SearchParams = Promise<{ year?: string; month?: string }>;
@@ -14,9 +15,10 @@ export default async function RecordsPage({
   const year = params.year ? Number(params.year) : now.getFullYear();
   const month = params.month ? Number(params.month) : now.getMonth() + 1;
 
-  const [sessions, settings] = await Promise.all([
+  const [sessions, settings, monthlyAggregate] = await Promise.all([
     getWorkSessionsByMonth(year, month),
     getSettings(),
+    getMonthlyAggregateByMonth(year, month),
   ]);
 
   return (
@@ -27,6 +29,7 @@ export default async function RecordsPage({
         hourlyRate={settings.hourlyRate}
         initialYear={year}
         initialMonth={month}
+        monthlyAggregate={monthlyAggregate}
       />
     </div>
   );

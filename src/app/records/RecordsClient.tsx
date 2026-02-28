@@ -11,8 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { WorkSessionForm, DeleteConfirmDialog } from "./WorkSessionForm";
+import { MonthlyAggregateSection } from "./MonthlyAggregateSection";
 import { calcWorkMinutes } from "@/lib/time";
-import type { WorkSession } from "@/generated/prisma/client";
+import type { MonthlyAggregate, WorkSession } from "@/generated/prisma/client";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 type Props = {
@@ -21,6 +22,7 @@ type Props = {
   year: number;
   month: number;
   onMonthChange: (year: number, month: number) => void;
+  monthlyAggregate: MonthlyAggregate | null;
 };
 
 function formatMinutes(minutes: number): string {
@@ -36,15 +38,17 @@ export function RecordsClient({
   year,
   month,
   onMonthChange,
+  monthlyAggregate,
 }: Props) {
   const [addOpen, setAddOpen] = useState(false);
   const [editSession, setEditSession] = useState<WorkSession | null>(null);
   const [deleteSession, setDeleteSession] = useState<WorkSession | null>(null);
 
-  const totalMinutes = sessions.reduce(
+  const sessionsMinutes = sessions.reduce(
     (sum, s) => sum + calcWorkMinutes(s.startTime, s.endTime, s.breakMinutes),
     0
   );
+  const totalMinutes = sessionsMinutes + (monthlyAggregate?.totalMinutes ?? 0);
   const totalSalary = Math.floor((totalMinutes / 60) * hourlyRate);
 
   function prevMonth() {
@@ -94,8 +98,15 @@ export function RecordsClient({
         </div>
       </div>
 
+      {/* 月次集計（過去データ） */}
+      <MonthlyAggregateSection
+        year={year}
+        month={month}
+        aggregate={monthlyAggregate}
+      />
+
       {/* テーブル */}
-      {sessions.length === 0 ? (
+      {sessions.length === 0 && !monthlyAggregate ? (
         <p className="text-center text-muted-foreground py-12 text-sm">
           この月の記録はありません
         </p>
