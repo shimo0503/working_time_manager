@@ -8,6 +8,7 @@ import { calcWorkMinutes } from "@/lib/time";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Banknote, Clock, BarChart2, Target, CalendarDays } from "lucide-react";
 
 function formatMinutes(minutes: number): string {
   const h = Math.floor(minutes / 60);
@@ -70,9 +71,10 @@ export default async function DashboardPage() {
 
       {/* 月次サマリー */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border-l-4 border-l-emerald-500">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+              <Banknote className="h-4 w-4 text-emerald-500" />
               今月の給与（概算）
             </CardTitle>
           </CardHeader>
@@ -86,9 +88,10 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+              <Clock className="h-4 w-4 text-blue-500" />
               今月の勤務時間
             </CardTitle>
           </CardHeader>
@@ -100,9 +103,10 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-amber-500">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+              <BarChart2 className="h-4 w-4 text-amber-500" />
               平均勤務時間 / 日
             </CardTitle>
           </CardHeader>
@@ -121,37 +125,43 @@ export default async function DashboardPage() {
 
       {/* 評価サイクル進捗 */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Target className="h-4 w-4 text-primary" />
             評価サイクル進捗
-            <Badge variant="secondary" className="ml-2 text-xs font-normal">
+            <Badge variant="secondary" className="ml-1 text-xs font-normal">
               目標 {cycleTarget}時間
             </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="font-medium">
-              {cycleHours.toFixed(1)} / {cycleTarget} 時間
-            </span>
-            <span className="text-muted-foreground">
+        <CardContent className="space-y-4">
+          <div className="flex items-end justify-between">
+            <div>
+              <span className="text-3xl font-bold">{cycleHours.toFixed(1)}</span>
+              <span className="text-muted-foreground text-sm ml-1">/ {cycleTarget}時間</span>
+            </div>
+            <span className="text-2xl font-semibold text-muted-foreground">
               {cycleProgress.toFixed(1)}%
             </span>
           </div>
-          <Progress value={cycleProgress} className="h-3" />
-          <p className="text-xs text-muted-foreground">
-            {cycleProgress < 100 ? (
-              <>
-                残り <strong>{remainingHours.toFixed(1)}時間</strong> で評価対象
-              </>
-            ) : (
-              <span className="text-green-600 font-medium">
-                評価サイクル達成！
-              </span>
-            )}
-            　サイクル開始:{" "}
-            {new Date(settings.cycleStartDate).toLocaleDateString("ja-JP")}
-          </p>
+          <Progress value={cycleProgress} className="h-2.5" />
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              {cycleProgress < 100 ? (
+                <>
+                  残り <strong className="text-foreground">{remainingHours.toFixed(1)}時間</strong> で評価対象
+                </>
+              ) : (
+                <span className="text-green-600 font-semibold">
+                  評価サイクル達成！
+                </span>
+              )}
+            </span>
+            <span className="flex items-center gap-1">
+              <CalendarDays className="h-3 w-3" />
+              開始: {new Date(settings.cycleStartDate).toLocaleDateString("ja-JP")}
+            </span>
+          </div>
         </CardContent>
       </Card>
 

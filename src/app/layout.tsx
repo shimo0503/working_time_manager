@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { NavLink } from "@/components/NavLink";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,30 +29,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background`}
       >
-        <header className="border-b bg-card">
+        <header className="border-b bg-card/95 backdrop-blur-sm sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-            <Link href="/" className="font-bold text-lg">
+            <Link href="/" className="font-bold text-base tracking-tight">
               勤務管理
             </Link>
-            <nav className="flex gap-6 text-sm">
-              <Link
-                href="/"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                ダッシュボード
-              </Link>
-              <Link
-                href="/records"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                勤務記録
-              </Link>
-              <Link
-                href="/settings"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                設定
-              </Link>
+            <nav className="flex gap-6">
+              <NavLink href="/">ダッシュボード</NavLink>
+              <NavLink href="/records">勤務記録</NavLink>
+              <NavLink href="/settings">設定</NavLink>
             </nav>
           </div>
         </header>

@@ -13,6 +13,7 @@ import {
 import { WorkSessionForm, DeleteConfirmDialog } from "./WorkSessionForm";
 import { calcWorkMinutes } from "@/lib/time";
 import type { WorkSession } from "@/generated/prisma/client";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 type Props = {
   sessions: WorkSession[];
@@ -61,36 +62,36 @@ export function RecordsClient({
       {/* 月選択 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={prevMonth}>
-            ←
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="font-medium text-sm min-w-[6rem] text-center">
+          <span className="font-semibold text-sm min-w-[6rem] text-center">
             {year}年{month}月
           </span>
-          <Button variant="outline" size="sm" onClick={nextMonth}>
-            →
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth}>
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button size="sm" onClick={() => setAddOpen(true)}>
-          + 追加
+        <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
+          <Plus className="h-4 w-4" />
+          追加
         </Button>
       </div>
 
       {/* サマリー */}
-      <div className="flex gap-6 text-sm text-muted-foreground border rounded-lg px-4 py-2 bg-muted/30">
-        <span>
-          合計:{" "}
-          <strong className="text-foreground">
-            {formatMinutes(totalMinutes)}時間
-          </strong>
-        </span>
-        <span>
-          給与概算:{" "}
-          <strong className="text-foreground">
-            ¥{totalSalary.toLocaleString()}
-          </strong>
-        </span>
-        <span>{sessions.length}日</span>
+      <div className="grid grid-cols-3 gap-3 text-sm">
+        <div className="border rounded-lg px-4 py-3 bg-muted/30 text-center">
+          <p className="text-xs text-muted-foreground mb-0.5">合計時間</p>
+          <p className="font-semibold">{formatMinutes(totalMinutes)}時間</p>
+        </div>
+        <div className="border rounded-lg px-4 py-3 bg-muted/30 text-center">
+          <p className="text-xs text-muted-foreground mb-0.5">給与概算</p>
+          <p className="font-semibold">¥{totalSalary.toLocaleString()}</p>
+        </div>
+        <div className="border rounded-lg px-4 py-3 bg-muted/30 text-center">
+          <p className="text-xs text-muted-foreground mb-0.5">勤務日数</p>
+          <p className="font-semibold">{sessions.length}日</p>
+        </div>
       </div>
 
       {/* テーブル */}
