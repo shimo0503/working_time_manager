@@ -3,11 +3,16 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { RecordsClient } from "./RecordsClient";
-import type { MonthlyAggregate, WorkSession } from "@/generated/prisma/client";
+import type {
+  HourlyRate,
+  MonthlyAggregate,
+  WorkSession,
+} from "@/generated/prisma/client";
 
 type Props = {
   sessions: WorkSession[];
-  hourlyRate: number;
+  defaultHourlyRate: number;
+  hourlyRates: HourlyRate[];
   initialYear: number;
   initialMonth: number;
   monthlyAggregate: MonthlyAggregate | null;
@@ -15,7 +20,8 @@ type Props = {
 
 export function RecordsPageWrapper({
   sessions,
-  hourlyRate,
+  defaultHourlyRate,
+  hourlyRates,
   initialYear,
   initialMonth,
   monthlyAggregate,
@@ -36,7 +42,8 @@ export function RecordsPageWrapper({
   return (
     <RecordsClient
       sessions={sessions}
-      hourlyRate={hourlyRate}
+      defaultHourlyRate={defaultHourlyRate}
+      hourlyRates={hourlyRates}
       year={year}
       month={month}
       onMonthChange={handleMonthChange}

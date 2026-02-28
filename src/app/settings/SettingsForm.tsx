@@ -52,7 +52,10 @@ export function SettingsForm({ settings }: Props) {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium">時給（円）</label>
+              <label className="text-sm font-medium">デフォルト時給（円）</label>
+              <p className="text-xs text-muted-foreground">
+                時給変更履歴に設定がない期間に使用されます
+              </p>
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground">¥</span>
                 <Input

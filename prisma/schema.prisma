@@ -36,6 +36,16 @@ model MonthlyAggregate {
   @@map("monthly_aggregates")
 }
 
+model HourlyRate {
+  id            String   @id @default(uuid())
+  rate          Int
+  effectiveFrom DateTime @db.Date
+  note          String?
+  createdAt     DateTime @default(now())
+
+  @@map("hourly_rates")
+}
+
 model Settings {
   id                   String   @id @default("default")
   hourlyRate           Int      @default(1000)

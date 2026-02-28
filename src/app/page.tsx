@@ -8,7 +8,9 @@ import {
   getMonthlyAggregateByMonth,
   getMonthlyAggregatesFromDate,
 } from "@/app/actions/monthly-aggregates";
+import { getAllHourlyRates } from "@/app/actions/hourly-rates";
 import { calcWorkMinutes } from "@/lib/time";
+import { getRateForDate } from "@/lib/salary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -37,13 +39,16 @@ export default async function DashboardPage() {
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
 
-  const [settings, monthlySessions, recentSessions, monthlyAggregate] =
+  const [settings, monthlySessions, recentSessions, monthlyAggregate, hourlyRates] =
     await Promise.all([
       getSettings(),
       getWorkSessionsByMonth(year, month),
       getRecentWorkSessions(5),
       getMonthlyAggregateByMonth(year, month),
+      getAllHourlyRates(),
     ]);
+
+  const fallbackRate = settings.hourlyRate;
 
   // 今月の合計実働時間（分）= 個別記録 + 月次集計
   const monthlySessionMinutes = monthlySessions.reduce(
@@ -52,10 +57,25 @@ export default async function DashboardPage() {
   );
   const monthlyMinutes =
     monthlySessionMinutes + (monthlyAggregate?.totalMinutes ?? 0);
-  const monthlyHours = monthlyMinutes / 60;
 
-  // 今月の給与
-  const monthlySalary = Math.floor(monthlyHours * settings.hourlyRate);
+  // 今月の給与（各セッションに適切な時給を適用）
+  const sessionsSalary = monthlySessions.reduce((sum: number, s: { date: Date; startTime: string; endTime: string; breakMinutes: number }) => {
+    const mins = calcWorkMinutes(s.startTime, s.endTime, s.breakMinutes);
+    const rate = getRateForDate(hourlyRates, new Date(s.date), fallbackRate);
+    return sum + Math.floor((mins / 60) * rate);
+  }, 0);
+  const aggregateDate = new Date(Date.UTC(year, month - 1, 1));
+  const aggregateRate = getRateForDate(hourlyRates, aggregateDate, fallbackRate);
+  const aggregateSalary = Math.floor(
+    ((monthlyAggregate?.totalMinutes ?? 0) / 60) * aggregateRate
+  );
+  const monthlySalary = sessionsSalary + aggregateSalary;
+
+  // 現在の時給（最新の HourlyRate エントリ、なければデフォルト）
+  const currentRate =
+    hourlyRates.length > 0
+      ? getRateForDate(hourlyRates, new Date(), fallbackRate)
+      : fallbackRate;
 
   // 評価サイクル進捗（個別記録 + 月次集計を合算）
   const [cycleSessions, cycleAggregates] = await Promise.all([
@@ -99,7 +119,7 @@ export default async function DashboardPage() {
               ¥{monthlySalary.toLocaleString()}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              時給 ¥{settings.hourlyRate.toLocaleString()}
+              現在の時給 ¥{currentRate.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -199,6 +219,11 @@ export default async function DashboardPage() {
                   s.endTime,
                   s.breakMinutes
                 );
+                const rate = getRateForDate(
+                  hourlyRates,
+                  new Date(s.date),
+                  fallbackRate
+                );
                 return (
                   <div
                     key={s.id}
@@ -216,10 +241,7 @@ export default async function DashboardPage() {
                         {formatMinutes(workMin)}
                       </span>
                       <span className="text-muted-foreground ml-2 text-xs">
-                        ¥
-                        {Math.floor(
-                          (workMin / 60) * settings.hourlyRate
-                        ).toLocaleString()}
+                        ¥{Math.floor((workMin / 60) * rate).toLocaleString()}
                       </span>
                     </div>
                   </div>

@@ -37,6 +37,7 @@ export default function RootLayout({
             <nav className="flex gap-6">
               <NavLink href="/">ダッシュボード</NavLink>
               <NavLink href="/records">勤務記録</NavLink>
+              <NavLink href="/annual">年次サマリー</NavLink>
               <NavLink href="/settings">設定</NavLink>
             </nav>
           </div>

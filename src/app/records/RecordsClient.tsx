@@ -13,12 +13,16 @@ import {
 import { WorkSessionForm, DeleteConfirmDialog } from "./WorkSessionForm";
 import { MonthlyAggregateSection } from "./MonthlyAggregateSection";
 import { calcWorkMinutes } from "@/lib/time";
+import { getRateForDate } from "@/lib/salary";
 import type { MonthlyAggregate, WorkSession } from "@/generated/prisma/client";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
+type HourlyRateEntry = { rate: number; effectiveFrom: Date | string };
+
 type Props = {
   sessions: WorkSession[];
-  hourlyRate: number;
+  defaultHourlyRate: number;
+  hourlyRates: HourlyRateEntry[];
   year: number;
   month: number;
   onMonthChange: (year: number, month: number) => void;
@@ -34,7 +38,8 @@ function formatMinutes(minutes: number): string {
 
 export function RecordsClient({
   sessions,
-  hourlyRate,
+  defaultHourlyRate,
+  hourlyRates,
   year,
   month,
   onMonthChange,
@@ -48,8 +53,21 @@ export function RecordsClient({
     (sum, s) => sum + calcWorkMinutes(s.startTime, s.endTime, s.breakMinutes),
     0
   );
+  const sessionsSalary = sessions.reduce((sum, s) => {
+    const mins = calcWorkMinutes(s.startTime, s.endTime, s.breakMinutes);
+    const rate = getRateForDate(hourlyRates, new Date(s.date), defaultHourlyRate);
+    return sum + Math.floor((mins / 60) * rate);
+  }, 0);
+
+  // 月次集計の時給は月初日を基準に決定
+  const aggregateDate = new Date(Date.UTC(year, month - 1, 1));
+  const aggregateRate = getRateForDate(hourlyRates, aggregateDate, defaultHourlyRate);
+  const aggregateSalary = Math.floor(
+    ((monthlyAggregate?.totalMinutes ?? 0) / 60) * aggregateRate
+  );
+
   const totalMinutes = sessionsMinutes + (monthlyAggregate?.totalMinutes ?? 0);
-  const totalSalary = Math.floor((totalMinutes / 60) * hourlyRate);
+  const totalSalary = sessionsSalary + aggregateSalary;
 
   function prevMonth() {
     if (month === 1) onMonthChange(year - 1, 12);
@@ -130,7 +148,12 @@ export function RecordsClient({
                 s.endTime,
                 s.breakMinutes
               );
-              const salary = Math.floor((workMin / 60) * hourlyRate);
+              const rate = getRateForDate(
+                hourlyRates,
+                new Date(s.date),
+                defaultHourlyRate
+              );
+              const salary = Math.floor((workMin / 60) * rate);
               return (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">

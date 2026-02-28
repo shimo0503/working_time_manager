@@ -1,8 +1,13 @@
 import { getSettings } from "@/app/actions/settings";
+import { getAllHourlyRates } from "@/app/actions/hourly-rates";
 import { SettingsForm } from "./SettingsForm";
+import { HourlyRateSection } from "./HourlyRateSection";
 
 export default async function SettingsPage() {
-  const settings = await getSettings();
+  const [settings, hourlyRates] = await Promise.all([
+    getSettings(),
+    getAllHourlyRates(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -13,6 +18,7 @@ export default async function SettingsPage() {
         </p>
       </div>
       <SettingsForm settings={settings} />
+      <HourlyRateSection rates={hourlyRates} />
     </div>
   );
 }
