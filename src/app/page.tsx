@@ -1,12 +1,12 @@
 import {
   getWorkSessionsByMonth,
-  getWorkSessionsFromDate,
+  getAllWorkSessions,
   getRecentWorkSessions,
 } from "@/app/actions/work-sessions";
-import { getSettings, checkAndAutoResetCycle } from "@/app/actions/settings";
+import { getSettings } from "@/app/actions/settings";
 import {
   getMonthlyAggregateByMonth,
-  getMonthlyAggregatesFromDate,
+  getAllMonthlyAggregates,
 } from "@/app/actions/monthly-aggregates";
 import { getAllHourlyRates } from "@/app/actions/hourly-rates";
 import { calcWorkMinutes } from "@/lib/time";
@@ -14,7 +14,7 @@ import { getRateForDate } from "@/lib/salary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Banknote, Clock, BarChart2, Target, CalendarDays } from "lucide-react";
+import { Banknote, Clock, BarChart2, Target } from "lucide-react";
 
 function formatMinutes(minutes: number): string {
   const h = Math.floor(minutes / 60);
@@ -32,20 +32,19 @@ function formatDate(date: Date): string {
 }
 
 export default async function DashboardPage() {
-  // 評価サイクルが完了していれば自動リセット（データ取得前に実行）
-  await checkAndAutoResetCycle();
-
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
 
-  const [settings, monthlySessions, recentSessions, monthlyAggregate, hourlyRates] =
+  const [settings, monthlySessions, recentSessions, monthlyAggregate, hourlyRates, allSessions, allAggregates] =
     await Promise.all([
       getSettings(),
       getWorkSessionsByMonth(year, month),
       getRecentWorkSessions(5),
       getMonthlyAggregateByMonth(year, month),
       getAllHourlyRates(),
+      getAllWorkSessions(),
+      getAllMonthlyAggregates(),
     ]);
 
   const fallbackRate = settings.hourlyRate;
@@ -77,23 +76,23 @@ export default async function DashboardPage() {
       ? getRateForDate(hourlyRates, new Date(), fallbackRate)
       : fallbackRate;
 
-  // 評価サイクル進捗（個別記録 + 月次集計を合算）
-  const [cycleSessions, cycleAggregates] = await Promise.all([
-    getWorkSessionsFromDate(settings.cycleStartDate),
-    getMonthlyAggregatesFromDate(settings.cycleStartDate),
-  ]);
-  const cycleSessionMinutes = cycleSessions.reduce(
+  // 評価サイクル進捗（全期間累計時間から計算）
+  const totalSessionMinutes = allSessions.reduce(
     (sum, s) => sum + calcWorkMinutes(s.startTime, s.endTime, s.breakMinutes),
     0
   );
-  const cycleAggregateMinutes = cycleAggregates.reduce(
+  const totalAggregateMinutes = allAggregates.reduce(
     (sum: number, a: { totalMinutes: number }) => sum + a.totalMinutes,
     0
   );
-  const cycleMinutes = cycleSessionMinutes + cycleAggregateMinutes;
-  const cycleHours = cycleMinutes / 60;
+  const totalMinutes = totalSessionMinutes + totalAggregateMinutes;
+
   const cycleTarget = settings.evaluationCycleHours;
-  const cycleProgress = Math.min(100, (cycleHours / cycleTarget) * 100);
+  const cycleTargetMinutes = cycleTarget * 60;
+  const completedCycles = Math.floor(totalMinutes / cycleTargetMinutes);
+  const currentCycleMinutes = totalMinutes % cycleTargetMinutes;
+  const cycleHours = currentCycleMinutes / 60;
+  const cycleProgress = Math.min(100, (currentCycleMinutes / cycleTargetMinutes) * 100);
   const remainingHours = Math.max(0, cycleTarget - cycleHours);
 
   return (
@@ -193,9 +192,8 @@ export default async function DashboardPage() {
                 </span>
               )}
             </span>
-            <span className="flex items-center gap-1">
-              <CalendarDays className="h-3 w-3" />
-              開始: {new Date(settings.cycleStartDate).toLocaleDateString("ja-JP")}
+            <span>
+              第 <strong className="text-foreground">{completedCycles + 1}</strong> 評価サイクル（通算 {(totalMinutes / 60).toFixed(1)}時間）
             </span>
           </div>
         </CardContent>

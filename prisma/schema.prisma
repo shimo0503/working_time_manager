@@ -50,7 +50,6 @@ model Settings {
   id                   String   @id @default("default")
   hourlyRate           Int      @default(1000)
   evaluationCycleHours Int      @default(160)
-  cycleStartDate       DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
   @@map("settings")

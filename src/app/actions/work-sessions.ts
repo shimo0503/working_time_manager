@@ -38,6 +38,13 @@ export async function getWorkSessionsFromDate(fromDate: Date) {
   return sessions;
 }
 
+/** 全勤務記録を取得（評価サイクル累計計算用） */
+export async function getAllWorkSessions() {
+  return prisma.workSession.findMany({
+    orderBy: { date: "asc" },
+  });
+}
+
 /** 直近N件の勤務記録を取得 */
 export async function getRecentWorkSessions(limit: number = 5) {
   return prisma.workSession.findMany({

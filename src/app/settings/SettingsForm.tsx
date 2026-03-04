@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { updateSettings, resetCycleStartDate } from "@/app/actions/settings";
+import { updateSettings } from "@/app/actions/settings";
 import type { Settings } from "@/generated/prisma/client";
 
 type Props = {
@@ -13,7 +13,6 @@ type Props = {
 
 export function SettingsForm({ settings }: Props) {
   const [isPending, startTransition] = useTransition();
-  const [isResetting, startResetting] = useTransition();
   const [saved, setSaved] = useState(false);
 
   const [form, setForm] = useState({
@@ -32,13 +31,6 @@ export function SettingsForm({ settings }: Props) {
       await updateSettings(form);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    });
-  }
-
-  function handleResetCycle() {
-    if (!confirm("評価サイクルの開始日を今日にリセットしますか？")) return;
-    startResetting(async () => {
-      await resetCycleStartDate();
     });
   }
 
@@ -73,7 +65,7 @@ export function SettingsForm({ settings }: Props) {
             <div className="space-y-1">
               <label className="text-sm font-medium">評価サイクル（時間）</label>
               <p className="text-xs text-muted-foreground">
-                何時間ごとに評価が行われるか（通常 160 時間）
+                何時間ごとに評価が行われるか（通常 160 時間）。累計労働時間がこの値の倍数に達するたびに評価対象となります。
               </p>
               <Input
                 type="number"
@@ -95,35 +87,6 @@ export function SettingsForm({ settings }: Props) {
               )}
             </div>
           </form>
-        </CardContent>
-      </Card>
-
-      {/* 評価サイクル管理 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">評価サイクル管理</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="text-sm">
-            <span className="text-muted-foreground">現在のサイクル開始日: </span>
-            <strong>
-              {new Date(settings.cycleStartDate).toLocaleDateString("ja-JP", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </strong>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            評価が完了したら、サイクルを今日からリセットしてください。
-          </p>
-          <Button
-            variant="outline"
-            onClick={handleResetCycle}
-            disabled={isResetting}
-          >
-            {isResetting ? "リセット中…" : "今日からサイクルをリセット"}
-          </Button>
         </CardContent>
       </Card>
     </div>

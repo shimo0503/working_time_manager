@@ -33,6 +33,13 @@ export type MonthlyAggregateInput = {
   note?: string;
 };
 
+/** 全月次集計を取得（評価サイクル累計計算用） */
+export async function getAllMonthlyAggregates() {
+  return prisma.monthlyAggregate.findMany({
+    orderBy: [{ year: "asc" }, { month: "asc" }],
+  });
+}
+
 /** 月次集計を作成または更新 */
 export async function upsertMonthlyAggregate(input: MonthlyAggregateInput) {
   await prisma.monthlyAggregate.upsert({
