@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getSettings } from "@/app/actions/settings";
 import { getAllHourlyRates } from "@/app/actions/hourly-rates";
 import { SettingsForm } from "./SettingsForm";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getWorkSessionsByMonth } from "@/app/actions/work-sessions";
 import { getSettings } from "@/app/actions/settings";
 import { getMonthlyAggregateByMonth } from "@/app/actions/monthly-aggregates";

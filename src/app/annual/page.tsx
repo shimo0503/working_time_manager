@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getYearlySummaries } from "@/app/actions/annual";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
