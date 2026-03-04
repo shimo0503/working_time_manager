@@ -1,0 +1,43 @@
+# Stage 1: 本番用依存パッケージのインストール
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Stage 2: ビルド（devDeps含む全パッケージ + Prisma生成 + Next.jsビルド）
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+# Stage 3: 本番ランタイム（最小構成）
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# 本番用 node_modules（prisma CLI含む）
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+
+# ビルド成果物
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/src/generated ./src/generated
+
+# マイグレーション実行に必要なファイル
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --chown=nextjs:nodejs prisma.config.ts ./
+COPY --chown=nextjs:nodejs next.config.ts ./
+COPY --chown=nextjs:nodejs package.json ./
+
+USER nextjs
+EXPOSE 3000
+ENV PORT=3000 HOSTNAME=0.0.0.0
+
+# 起動時にマイグレーションを適用してからサーバーを開始
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
