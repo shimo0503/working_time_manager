@@ -109,7 +109,6 @@ Dockerfile
 | id | String | PK (固定値: "default") |
 | hourlyRate | Int | 時給 (円) |
 | evaluationCycleHours | Int | 評価サイクル時間数 (デフォルト 160) |
-| cycleStartDate | DateTime | 現在の評価サイクル開始日 |
 
 ## 重要な実装上の制約
 
@@ -130,6 +129,25 @@ Dockerfile
 
 ### Tailwind CSS v4
 - `tailwind.config.js` は不要。CSS変数ベースの設定（`globals.css` に定義済み）。
+
+### TypeScript の型付け規則
+
+- **Prisma モデルの型はインラインで書かない。** `import type { WorkSession, MonthlyAggregate } from "@/generated/prisma/client"` を使う。
+  ```ts
+  // NG: reduce コールバックにインラインで型注釈
+  sessions.reduce((sum: number, s: { date: Date; startTime: string; ... }) => ...)
+  // OK: Prisma 型をそのまま使う（型推論に任せる）
+  sessions.reduce((sum, s) => ...)
+  ```
+- **`next.config.ts` に存在しないキーを書かない。** 設定を追加する前に `NextConfig` 型に含まれるか確認すること。含まれない場合はランタイム警告が出る。
+- **DB 接続が必要な Server Component ページには必ず `export const dynamic = "force-dynamic"` を先頭に付ける。** 付け忘れると `next build` 時に静的プリレンダリングを試みて DB 接続エラーになる。
+
+### 本番環境 (docker-compose.prod.yml)
+
+- ビルドは `docker compose -f docker-compose.prod.yml build`、起動は `docker compose -f docker-compose.prod.yml up -d`。
+- 起動時に `prisma migrate deploy` が自動実行される。
+- **リバースプロキシ経由の場合、Server Actions の CSRF チェックに通るよう nginx で `proxy_set_header X-Forwarded-Host $host;` を設定すること。**
+- `next.config.ts` の `serverActions.allowedOrigins` は Next.js 16 では型・ランタイムともに非対応のため使用しない。
 
 ## Git コミットルール（Claude Code）
 
